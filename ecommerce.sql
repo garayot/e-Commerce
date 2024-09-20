@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 19, 2024 at 06:29 AM
+-- Generation Time: Sep 20, 2024 at 03:03 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -261,7 +261,6 @@ CREATE TABLE `sessiontokens` (
   `user_uuid` char(32) DEFAULT NULL,
   `session_token` varchar(255) NOT NULL,
   `otp_code` varchar(10) DEFAULT NULL,
-  `method` enum('sms','email') DEFAULT NULL,
   `otp_expires_at` timestamp NULL DEFAULT NULL,
   `session_expires_at` timestamp NULL DEFAULT NULL,
   `otp_verified` tinyint(1) DEFAULT 0,
@@ -272,17 +271,17 @@ CREATE TABLE `sessiontokens` (
 -- Dumping data for table `sessiontokens`
 --
 
-INSERT INTO `sessiontokens` (`session_id`, `user_uuid`, `session_token`, `otp_code`, `method`, `otp_expires_at`, `session_expires_at`, `otp_verified`, `created_at`) VALUES
-(1, 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', 'session_token_1', '123456', 'sms', '2024-09-19 04:03:29', '2024-09-19 04:53:29', 1, '2024-09-19 03:53:29'),
-(2, 'b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5a6', 'session_token_2', '654321', 'email', NULL, NULL, 1, '2024-09-19 03:57:00'),
-(3, 'c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6', 'session_token_3', '111111', 'sms', NULL, NULL, 0, '2024-09-19 03:57:00'),
-(4, 'd1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6', 'session_token_4', '222222', 'email', NULL, NULL, 1, '2024-09-19 03:57:00'),
-(5, 'e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6', 'session_token_5', '333333', 'sms', NULL, NULL, 0, '2024-09-19 03:57:00'),
-(6, 'f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6', 'session_token_6', '444444', 'email', NULL, NULL, 1, '2024-09-19 03:57:00'),
-(7, 'g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6', 'session_token_7', '555555', 'sms', NULL, NULL, 0, '2024-09-19 03:57:00'),
-(8, 'h1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6', 'session_token_8', '666666', 'email', NULL, NULL, 1, '2024-09-19 03:57:00'),
-(9, 'i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6', 'session_token_9', '777777', 'sms', NULL, NULL, 0, '2024-09-19 03:57:00'),
-(10, 'j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6', 'session_token_10', '888888', 'email', NULL, NULL, 1, '2024-09-19 03:57:00');
+INSERT INTO `sessiontokens` (`session_id`, `user_uuid`, `session_token`, `otp_code`, `otp_expires_at`, `session_expires_at`, `otp_verified`, `created_at`) VALUES
+(1, 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', 'session_token_1', '123456', '2024-09-19 04:03:29', '2024-09-19 04:53:29', 1, '2024-09-19 03:53:29'),
+(2, 'b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5a6', 'session_token_2', '654321', NULL, NULL, 1, '2024-09-19 03:57:00'),
+(3, 'c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6', 'session_token_3', '111111', NULL, NULL, 0, '2024-09-19 03:57:00'),
+(4, 'd1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6', 'session_token_4', '222222', NULL, NULL, 1, '2024-09-19 03:57:00'),
+(5, 'e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6', 'session_token_5', '333333', NULL, NULL, 0, '2024-09-19 03:57:00'),
+(6, 'f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6', 'session_token_6', '444444', NULL, NULL, 1, '2024-09-19 03:57:00'),
+(7, 'g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6', 'session_token_7', '555555', NULL, NULL, 0, '2024-09-19 03:57:00'),
+(8, 'h1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6', 'session_token_8', '666666', NULL, NULL, 1, '2024-09-19 03:57:00'),
+(9, 'i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6', 'session_token_9', '777777', NULL, NULL, 0, '2024-09-19 03:57:00'),
+(10, 'j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6', 'session_token_10', '888888', NULL, NULL, 1, '2024-09-19 03:57:00');
 
 -- --------------------------------------------------------
 
@@ -323,7 +322,6 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `address` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
-  `mfa_method` enum('sms','email') DEFAULT NULL,
   `role` enum('customer','admin') DEFAULT 'customer',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -333,17 +331,17 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_uuid`, `first_name`, `last_name`, `email`, `password`, `address`, `phone_number`, `mfa_method`, `role`, `created_at`, `updated_at`) VALUES
-('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', 'John', 'Doe', 'john.doe@example.com', 'password123', '123 Main St', '555-1234', 'sms', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5a6', 'Jane', 'Smith', 'jane.smith@example.com', 'password456', '456 Elm St', '555-5678', 'email', 'admin', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6', 'Michael', 'Johnson', 'michael.johnson@example.com', 'password789', '789 Oak St', '555-7890', 'sms', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6', 'Emily', 'Davis', 'emily.davis@example.com', 'password987', '123 Pine St', '555-1111', 'email', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6', 'Daniel', 'Martinez', 'daniel.martinez@example.com', 'password654', '456 Maple St', '555-2222', 'sms', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6', 'Olivia', 'Garcia', 'olivia.garcia@example.com', 'password321', '789 Cedar St', '555-3333', 'email', 'admin', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6', 'David', 'Wilson', 'david.wilson@example.com', 'password234', '123 Birch St', '555-4444', 'sms', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('h1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6', 'Sophia', 'Lopez', 'sophia.lopez@example.com', 'password345', '456 Walnut St', '555-5555', 'email', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6', 'Liam', 'Brown', 'liam.brown@example.com', 'password456', '789 Poplar St', '555-6666', 'sms', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
-('j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6', 'Isabella', 'Jones', 'isabella.jones@example.com', 'password567', '123 Willow St', '555-7777', 'email', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46');
+INSERT INTO `users` (`user_uuid`, `first_name`, `last_name`, `email`, `password`, `address`, `phone_number`, `role`, `created_at`, `updated_at`) VALUES
+('a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6', 'John', 'Doe', 'john.doe@example.com', 'password123', '123 Main St', '555-1234', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5a6', 'Jane', 'Smith', 'jane.smith@example.com', 'password456', '456 Elm St', '555-5678', 'admin', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6', 'Michael', 'Johnson', 'michael.johnson@example.com', 'password789', '789 Oak St', '555-7890', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('d1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6', 'Emily', 'Davis', 'emily.davis@example.com', 'password987', '123 Pine St', '555-1111', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6', 'Daniel', 'Martinez', 'daniel.martinez@example.com', 'password654', '456 Maple St', '555-2222', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6', 'Olivia', 'Garcia', 'olivia.garcia@example.com', 'password321', '789 Cedar St', '555-3333', 'admin', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6', 'David', 'Wilson', 'david.wilson@example.com', 'password234', '123 Birch St', '555-4444', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('h1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6', 'Sophia', 'Lopez', 'sophia.lopez@example.com', 'password345', '456 Walnut St', '555-5555', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6', 'Liam', 'Brown', 'liam.brown@example.com', 'password456', '789 Poplar St', '555-6666', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46'),
+('j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6', 'Isabella', 'Jones', 'isabella.jones@example.com', 'password567', '123 Willow St', '555-7777', 'customer', '2024-09-19 03:45:46', '2024-09-19 03:45:46');
 
 --
 -- Indexes for dumped tables
