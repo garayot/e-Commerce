@@ -1,0 +1,11 @@
+/vendor/
+/composer.lock
+
+# IDE or OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Cache and logs
+/cache/
+*.log
