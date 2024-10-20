@@ -16,7 +16,7 @@ class UserProfile
     // Function to validate token and get user_uuid
     public function validateToken($token)
     {
-        // Prepare SQL to validate the token and get user_uuid
+
         $stmt = $this->conn->prepare("SELECT user_uuid FROM session_token WHERE token = ? AND expires_at > NOW()");
         $stmt->bind_param('s', $token);
         $stmt->execute();
@@ -28,10 +28,10 @@ class UserProfile
             return null;
         }
     }
-    // Function to get the user profile
+
     public function getUserProfile($user_uuid)
     {
-        // Prepare SQL to retrieve user profile
+
         $stmt = $this->conn->prepare("SELECT user_uuid, first_name, last_name, email, address, phone_number, role, created_at, updated_at
                                       FROM users
                                       WHERE user_uuid = ?");
@@ -103,17 +103,16 @@ class UserProfile
     }
 
 
-    // Example function to update user's email
     public function updateUserEmail($user_uuid, $new_email)
     {
-        // Check if the email is already in use
+
         $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->bind_param('s', $new_email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
-            // Email is not in use, proceed with updating the email
+
             $stmt = $this->conn->prepare("UPDATE users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE user_uuid = ?");
             $stmt->bind_param('ss', $new_email, $user_uuid);
 

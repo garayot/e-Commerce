@@ -17,7 +17,6 @@ class PasswordReset
         $this->mail = new PHPMailer(true);
     }
 
-    // Function to send password reset email
     private function sendEmail($email, $reset_token)
     {
         try {
@@ -44,7 +43,6 @@ class PasswordReset
         }
     }
 
-    // Function to request password reset
     public function requestPasswordReset($email)
     {
 

@@ -48,7 +48,7 @@ class UserAuthentication
         }
     }
 
-    // Send Verification Email
+
     private function sendVerificationEmail($email, $code)
     {
         try {
@@ -208,26 +208,26 @@ class UserAuthentication
             return ['error' => 'Failed to register user'];
         }
     }
-    // Logout function
-    // Logout function
+
+
     public function logout()
     {
-        // Get the request headers
+
         $headers = apache_request_headers();
 
-        // Check if the Authorization header exists and extract the Bearer token
-        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
-            $token = $matches[1]; // Extract the token
 
-            // Check if the token exists in the session_token table
+        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+            $token = $matches[1];
+
+
             $stmt = $this->conn->prepare("SELECT * FROM session_token WHERE token = ?");
             $stmt->bind_param('s', $token);
             $stmt->execute();
             $result = $stmt->get_result();
 
-            // If token is found, proceed with logout
+
             if ($result->num_rows > 0) {
-                // Delete the session token from the database
+
                 $stmt = $this->conn->prepare("DELETE FROM session_token WHERE token = ?");
                 $stmt->bind_param('s', $token);
 
@@ -237,11 +237,11 @@ class UserAuthentication
                     return ['error' => 'Logout failed due to a server issue'];
                 }
             } else {
-                // Token not found, return an error
+
                 return ['error' => 'Invalid or expired token'];
             }
         } else {
-            // Authorization header or token missing
+
             return ['error' => 'Authorization token not provided or invalid'];
         }
     }

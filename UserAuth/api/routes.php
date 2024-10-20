@@ -124,17 +124,4 @@ class Router
         $controller = new UserListController($this->db);
         return $controller->getUserRoles($data);
     }
-
-
-
-
-    //     private function handleListUserRoles($data)
-    //     {
-    //         if (!isset($data['user_uuid'])) {
-    //             return ['error' => 'User ID not provided'];
-    //         }
-
-    //         $controller = new UserRolesController($this->db);
-    //         return $controller->listUserRoles($data['user_uuid']);
-    //     }
 }
