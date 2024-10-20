@@ -1,6 +1,6 @@
 <?php
 if (isset($_GET['token'])) {
-    $token = htmlspecialchars($_GET['token']); // Sanitize the token input
+    $token = htmlspecialchars($_GET['token']);
 } else {
     echo "No token provided.";
     exit;

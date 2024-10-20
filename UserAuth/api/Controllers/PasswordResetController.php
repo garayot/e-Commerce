@@ -3,14 +3,17 @@
 namespace Api\Controllers;
 
 use Auth\PasswordReset;
+use Api\Controllers\AuthController;
 
 class PasswordResetController
 {
     private $passwordReset;
+    private $validate;
 
     public function __construct($db)
     {
         $this->passwordReset = new PasswordReset($db);
+        $this->validate = new AuthController($db);
     }
 
     public function requestPasswordReset($data)
@@ -26,7 +29,11 @@ class PasswordResetController
     {
         if (!empty($data['password']) && !empty($data['confirm_password'])) {
             if ($data['password'] === $data['confirm_password']) {
-                return $this->passwordReset->resetPassword($data);
+                $password_error = $this->validate->validatePassword($data['password']);
+                if ($password_error) {
+                    return ['error' => $password_error];
+                }
+                return $this->passwordReset->resetPassword($data['password']);
             } else {
                 return ['error' => 'Passwords do not match'];
             }
