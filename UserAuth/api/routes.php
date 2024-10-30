@@ -54,6 +54,8 @@ class Router
                 return $this->handleRevokeUserRole($data);
             case 'list_user_roles':
                 return $this->handleListUserRoles($data);
+            case 'change_password':
+                return $this->handleChangePassword($data);
             default:
                 return ['error' => 'Action not found'];
         }
@@ -123,5 +125,10 @@ class Router
     {
         $controller = new UserListController($this->db);
         return $controller->getUserRoles($data);
+    }
+    private function handleChangePassword($data)
+    {
+        $controller = new UserProfileController($this->db);
+        return $controller->changePassword($data);
     }
 }

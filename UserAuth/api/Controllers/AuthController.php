@@ -18,7 +18,14 @@ class AuthController
         // Ensure required fields are provided
         if (!empty($data['first_name']) && !empty($data['last_name']) && !empty($data['email']) && !empty($data['phone']) && !empty($data['address']) && !empty($data['password'])) {
 
-            // Validate password before proceeding
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL) || !preg_match("/@gmail\.com$/", $data['email'])) {
+                return ['error' => 'Invalid email address. Only Gmail accounts are allowed.'];
+            }
+
+            if (!preg_match("/^09[0-9]{9}$/", $data['phone'])) {
+                return ['error' => 'Invalid phone number. It must start with 09 and be 11 digits long.'];
+            }
+
             $password_error = $this->validatePassword($data['password']);
             if ($password_error) {
                 return ['error' => $password_error];

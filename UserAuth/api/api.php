@@ -31,7 +31,7 @@ class API
         } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (isset($_GET['action'])) {
                 $action = $_GET['action'];
-                jsonResponse($router->route($action, $_GET)); // Pass GET data to the router
+                jsonResponse($router->route($action, $_GET));
             } else {
                 jsonResponse(['error' => 'Action not specified']);
             }
@@ -40,6 +40,6 @@ class API
         }
     }
 }
-// Instantiate the API and handle the request
+
 $api = new API();
 $api->handleRequest();

@@ -32,7 +32,7 @@ class UserProfile
     public function getUserProfile($user_uuid)
     {
 
-        $stmt = $this->conn->prepare("SELECT user_uuid, first_name, last_name, email, address, phone_number, role, created_at, updated_at
+        $stmt = $this->conn->prepare("SELECT user_uuid, first_name, last_name, email, address, phone_number
                                       FROM users
                                       WHERE user_uuid = ?");
         $stmt->bind_param('s', $user_uuid);
@@ -123,6 +123,35 @@ class UserProfile
             }
         } else {
             return ['error' => 'Email already in use'];
+        }
+    }
+
+    public function changePassword($user_uuid, $data)
+    {
+
+        $stmt = $this->conn->prepare("SELECT password FROM users WHERE user_uuid = ?");
+        $stmt->bind_param('s', $user_uuid);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows !== 1) {
+            return ['error' => 'User not found'];
+        }
+
+        $user = $result->fetch_assoc();
+
+        if (!password_verify($data['current_password'], $user['password'])) {
+            return ['error' => 'Current password is incorrect'];
+        }
+
+        $hashed_password = password_hash($data['new_password'], PASSWORD_BCRYPT);
+        $stmt = $this->conn->prepare("UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE user_uuid = ?");
+        $stmt->bind_param('ss', $hashed_password, $user_uuid);
+
+        if ($stmt->execute()) {
+            return ['message' => 'Password changed successfully'];
+        } else {
+            return ['error' => 'Failed to change password'];
         }
     }
 }
