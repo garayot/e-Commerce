@@ -4,7 +4,7 @@ require './controllers/ProductCatalogController.php';
 require './controllers/SearchEngineController.php';
 require './controllers/SellerProductController.php';
 require './controllers/SellerSearchController.php';
-require './controllers/AdminController.php'; // Add the Admin controller
+require './controllers/AdminController.php';
 
 use Api\Controllers\ProductCatalogController;
 use Api\Controllers\SearchEngineController;
