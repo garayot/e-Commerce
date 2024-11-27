@@ -1,18 +1,24 @@
 // api-gateway/routes.php
-
 <?php
-// product apis (not yet final since we don't have the list of apis in one file to check)
-require_once '../Product/api/Controllers/ProductCatalogController.php';
-require_once '../Product/api/Controllers/SearchEngineController.php';
-require_once '../Product/api/Controllers/SellerProductController.php';
-require_once '../Product/api/Controllers/SellerSearchController.php';
+require_once 'Router.php';
+
+$router = new Router();
+
+// product apis
+require_once __DIR__ .
+    '/../Product/api/Controllers/ProductCatalogController.php';
+require_once __DIR__ . '/../Product/api/Controllers/SearchEngineController.php';
+require_once __DIR__ .
+    '/../Product/api/Controllers/SellerProductController.php';
+require_once __DIR__ . '/../Product/api/Controllers/SellerSearchController.php';
 
 // auth apis
-require_once '../UserAuth/api/Controllers/PasswordReset.php';
-require_once '../UserAuth/api/Controllers/User.php';
-require_once '../UserAuth/api/Controllers/UserAssign.php';
-require_once '../UserAuth/api/Controllers/UserList.php';
-require_once '../UserAuth/api/Controllers/UserProfile.php';
+require_once __DIR__ . '/../UserAuth/api/Controllers/AuthController.php';
+require_once __DIR__ .
+    '/../UserAuth/api/Controllers/PasswordResetController.php';
+require_once __DIR__ . '/../UserAuth/api/Controllers/UserAssignController.php';
+require_once __DIR__ . '/../UserAuth/api/Controllers/UserListController.php';
+require_once __DIR__ . '/../UserAuth/api/Controllers/UserProfileController.php';
 
 // ===================== products =========================
 $router->addRoute(
@@ -63,18 +69,41 @@ $router->addRoute(
     'SellerSearchController@searchSellerProducts'
 );
 
-// user auth apis
-$router->addRoute('POST', '/api/auth/signin', 'User@signin');
-$router->addRoute('POST', '/api/auth/signup', 'User@signup');
-$router->addRoute('POST', '/api/auth/password-reset', 'PasswordReset@reset');
+// ===================== user auth =========================
+$router->addRoute('POST', '/api/auth/signin', 'AuthController@login');
+$router->addRoute('POST', '/api/auth/signup', 'AuthController@register');
+$router->addRoute(
+    'POST',
+    '/api/auth/password-reset',
+    'PasswordResetController@resetPassword'
+);
 
 // user profile apis
-$router->addRoute('GET', '/api/user/profile', 'UserProfile@viewProfile');
-$router->addRoute('PUT', '/api/user/profile', 'UserProfile@updateProfile');
+$router->addRoute(
+    'GET',
+    '/api/user/profile',
+    'UserProfileController@getUserProfile'
+);
+$router->addRoute(
+    'PUT',
+    '/api/user/profile',
+    'UserProfileController@updateUserProfile'
+);
 
 // user assign apis
-$router->addRoute('GET', '/api/user/assign', 'UserAssign@assignRole');
-$router->addRoute('GET', '/api/user/list', 'UserList@listUsers');
+$router->addRoute(
+    'POST',
+    '/api/user/assign',
+    'UserAssignController@assignUserRole'
+);
+$router->addRoute(
+    'POST',
+    '/api/user/revoke',
+    'UserAssignController@revokeUserRole'
+);
+
+// user list apis
+$router->addRoute('GET', '/api/user/list', 'UserListController@getUserRoles');
 
 
 ?>

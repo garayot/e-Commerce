@@ -7,16 +7,13 @@ function checkCache()
             file_get_contents('php://input')
     );
     $cacheFile = __DIR__ . "/../cache/$cacheKey.json";
-
     if (file_exists($cacheFile) && time() - filemtime($cacheFile) < 300) {
         // cache is valid (e.g., 5 minutes expiration)
         echo file_get_contents($cacheFile);
         exit();
     }
-
     // start output buffer to initialize caching
     ob_start();
-
     // save cache after process
     register_shutdown_function(function () use ($cacheFile) {
         $response = ob_get_contents();

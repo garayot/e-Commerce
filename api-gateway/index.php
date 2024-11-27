@@ -19,25 +19,24 @@ authenticate();
 
 $response = ['error' => 'Endpoint not found']; // default response
 $statusCode = 404; // default status code
-
 $routeFound = false;
-foreach ($routes as $route => $config) {
+
+foreach ($router->getRoutes() as $route) {
     if (
-        preg_match("#^$route$#", $requestUri) &&
-        $config['method'] === $requestMethod
+        preg_match("#^{$route['path']}$#", $requestUri) &&
+        $route['method'] === $requestMethod
     ) {
         $routeFound = true;
-
-        ob_start();
-        require_once $config['service'];
-        $response = ob_get_contents();
+        list($controller, $method) = explode('@', $route['action']);
+        $controllerInstance = new $controller();
+        $response = $controllerInstance->$method(
+            json_decode($requestBody, true)
+        );
         $statusCode = http_response_code();
-        ob_end_clean();
-
         break;
     }
 }
 
 logRequestResponse($response, $statusCode);
 http_response_code($statusCode);
-echo $response;
+echo json_encode($response);

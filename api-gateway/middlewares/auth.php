@@ -1,4 +1,7 @@
 <?php
+
+require_once './UserAuth/database/db.php';
+
 function authenticate()
 {
     $headers = getallheaders();
@@ -16,9 +19,13 @@ function authenticate()
     }
 }
 
-//need to double check logic if there is authToken in db
+//need to double check logic if there is session_token in db
 function isValidToken($token)
 {
-    $secretKey = 'secret';
-    return $token === 'valid_example_token';
+    $db = new Database\Database();
+    $conn = $db->getConnection();
+    $sql = "SELECT * FROM sessiontokens WHERE session_token = '$token'";
+    $result = $conn->query($sql);
+    $db->close();
+    return $result->num_rows > 0;
 }
