@@ -2,11 +2,14 @@
 
 namespace Database;
 
-use mysqli;
+//use mysqli;
+// postgre
+use PDO;
+use PDOException;
 
 class Database
 {
-    private $servername = '127.0.0.1:3308';
+    private $servername = '127.0.0.1:5433';
     private $username = 'root';
     private $password = '';
     private $dbname = 'Ecommerce';
@@ -14,15 +17,16 @@ class Database
 
     public function __construct()
     {
-        $this->conn = new mysqli(
-            $this->servername,
-            $this->username,
-            $this->password,
-            $this->dbname
-        );
-
-        if ($this->conn->connect_error) {
-            die('Connection failed: ' . $this->conn->connect_error);
+        try {
+            $conn = new PDO(
+                "mysql:host=$this->servername;dbname=$this->dbname",
+                $this->username,
+                $this->password
+            );
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            echo 'Connected successfully';
+        } catch (PDOException $e) {
+            echo 'Connection failed: ' . $e->getMessage();
         }
     }
 
