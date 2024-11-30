@@ -1,110 +1,98 @@
-// api-gateway/routes.php
 <?php
 require_once 'Router.php';
+require_once __DIR__ . '/../UserAuth/database/db.php';
 
-// Initialize the router
-$router = new Router();
+use Database\Database;
+use Api\Controllers\ProductCatalogController;
+use Api\Controllers\SearchEngineController;
+use Api\Controllers\SellerProductController;
+use Api\Controllers\SellerSearchController;
+use Api\Controllers\AuthController;
+use Api\Controllers\PasswordResetController;
+use Api\Controllers\UserAssignController;
+use Api\Controllers\UserListController;
+use Api\Controllers\UserProfileController;
 
-// product apis
-require_once __DIR__ .
-    '/../Product/api/Controllers/ProductCatalogController.php';
-require_once __DIR__ . '/../Product/api/Controllers/SearchEngineController.php';
-require_once __DIR__ .
-    '/../Product/api/Controllers/SellerProductController.php';
-require_once __DIR__ . '/../Product/api/Controllers/SellerSearchController.php';
-
-// auth apis
-require_once __DIR__ . '/../UserAuth/api/Controllers/AuthController.php';
-require_once __DIR__ .
-    '/../UserAuth/api/Controllers/PasswordResetController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserAssignController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserListController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserProfileController.php';
+$db = new Database();
+$router = new Router($db);
 
 // ===================== products =========================
-$router->addRoute(
-    'GET',
-    '/api/products',
-    'ProductCatalogController@listProducts'
-);
-$router->addRoute(
-    'GET',
-    '/api/products/{id}',
-    'ProductCatalogController@getProduct'
-);
-$router->addRoute(
-    'POST',
-    '/api/products',
-    'ProductCatalogController@createProduct'
-);
-$router->addRoute(
-    'PUT',
-    '/api/products/{id}',
-    'ProductCatalogController@updateProduct'
-);
-$router->addRoute(
-    'DELETE',
-    '/api/products/{id}',
-    'ProductCatalogController@deleteProduct'
-);
+$router->addRoute('GET', '/api/products', [
+    ProductCatalogController::class,
+    'getAllProducts',
+]);
+$router->addRoute('GET', '/api/products/{id}', [
+    ProductCatalogController::class,
+    'getProductDetails',
+]);
+$router->addRoute('POST', '/api/products', [
+    ProductCatalogController::class,
+    'createProduct',
+]);
+$router->addRoute('PUT', '/api/products/{id}', [
+    ProductCatalogController::class,
+    'updateProduct',
+]);
+$router->addRoute('DELETE', '/api/products/{id}', [
+    ProductCatalogController::class,
+    'deleteProduct',
+]);
 
 // search
-$router->addRoute('GET', '/api/search', 'SearchEngineController@search');
+$router->addRoute('GET', '/api/search', [
+    SearchEngineController::class,
+    'search',
+]);
 
 // seller product apis
-$router->addRoute(
-    'GET',
-    '/api/seller/products',
-    'SellerProductController@listSellerProducts'
-);
-$router->addRoute(
-    'GET',
-    '/api/seller/products/{id}',
-    'SellerProductController@getSellerProduct'
-);
+$router->addRoute('GET', '/api/seller/products', [
+    SellerProductController::class,
+    'listSellerProducts',
+]);
+$router->addRoute('GET', '/api/seller/products/{id}', [
+    SellerProductController::class,
+    'getSellerProduct',
+]);
 
 // seller search
-$router->addRoute(
-    'GET',
-    '/api/seller/search',
-    'SellerSearchController@searchSellerProducts'
-);
+$router->addRoute('GET', '/api/seller/search', [
+    SellerSearchController::class,
+    'searchSellerProducts',
+]);
 
 // ===================== user auth =========================
-$router->addRoute('POST', '/api/auth/signin', 'AuthController@login');
-$router->addRoute('POST', '/api/auth/signup', 'AuthController@register');
-$router->addRoute(
-    'POST',
-    '/api/auth/password-reset',
-    'PasswordResetController@resetPassword'
-);
+$router->addRoute('POST', '/api/auth/signin', [AuthController::class, 'login']);
+$router->addRoute('POST', '/api/auth/signup', [
+    AuthController::class,
+    'register',
+]);
+$router->addRoute('POST', '/api/auth/password-reset', [
+    PasswordResetController::class,
+    'resetPassword',
+]);
 
 // user profile apis
-$router->addRoute(
-    'GET',
-    '/api/user/profile',
-    'UserProfileController@getUserProfile'
-);
-$router->addRoute(
-    'PUT',
-    '/api/user/profile',
-    'UserProfileController@updateUserProfile'
-);
+$router->addRoute('GET', '/api/user/profile', [
+    UserProfileController::class,
+    'getUserProfile',
+]);
+$router->addRoute('PUT', '/api/user/profile', [
+    UserProfileController::class,
+    'updateUserProfile',
+]);
 
 // user assign apis
-$router->addRoute(
-    'POST',
-    '/api/user/assign',
-    'UserAssignController@assignUserRole'
-);
-$router->addRoute(
-    'POST',
-    '/api/user/revoke',
-    'UserAssignController@revokeUserRole'
-);
+$router->addRoute('POST', '/api/user/assign', [
+    UserAssignController::class,
+    'assignUserRole',
+]);
+$router->addRoute('POST', '/api/user/revoke', [
+    UserAssignController::class,
+    'revokeUserRole',
+]);
 
 // user list apis
-$router->addRoute('GET', '/api/user/list', 'UserListController@getUserRoles');
-
-
-?>
+$router->addRoute('GET', '/api/user/list', [
+    UserListController::class,
+    'getUserRoles',
+]);

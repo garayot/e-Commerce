@@ -79,12 +79,12 @@ foreach ($router->getRoutes() as $route) {
         $route['method'] === $requestMethod
     ) {
         $routeFound = true;
-        list($controller, $method) = explode('@', $route['action']);
+        list($controller, $method) = $route['action'];
         $controllerInstance = new $controller();
         $response = $controllerInstance->$method(
             json_decode($requestBody, true)
         );
-        $statusCode = 200;
+        $statusCode = http_response_code();
         break;
     }
 }
