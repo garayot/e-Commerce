@@ -30,7 +30,7 @@ class API
 
         // Determine request method and handle accordingly
         $method = $_SERVER['REQUEST_METHOD'];
-        
+
         switch ($method) {
             case 'POST':
                 $data = json_decode(file_get_contents('php://input'), true);
@@ -47,7 +47,9 @@ class API
 
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);
-                jsonResponse($router->route($action, array_merge($_GET, $data)));
+                jsonResponse(
+                    $router->route($action, array_merge($_GET, $data))
+                );
                 break;
 
             default:
