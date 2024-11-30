@@ -1,0 +1,3 @@
+<br />
+<b>Warning</b>:  file_put_contents(D:\e-Commerce\api-gateway\middlewares/../cache/ratelimit_::1.json): Failed to open stream: No such file or directory in <b>D:\e-Commerce\api-gateway\middlewares\rate_limit.php</b> on line <b>34</b><br />
+{"error":"Unauthorized: Missing token"}

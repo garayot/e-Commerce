@@ -2,6 +2,7 @@
 <?php
 require_once 'Router.php';
 
+// Initialize the router
 $router = new Router();
 
 // product apis

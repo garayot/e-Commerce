@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../UserAuth/database/db.php';
+require_once __DIR__ . '/../../UserAuth/database/db.php';
 
 function authenticate()
 {
