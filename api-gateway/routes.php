@@ -1,6 +1,6 @@
 <?php
 require_once 'Router.php';
-require_once __DIR__ . '/../UserAuth/database/db.php';
+require_once __DIR__ . '/utils/db.php'; // Ensure this path is correct
 
 use Database\Database;
 use Api\Controllers\ProductCatalogController;
@@ -15,6 +15,11 @@ use Api\Controllers\UserProfileController;
 
 $db = new Database();
 $router = new Router($db);
+
+// Root URL
+$router->addRoute('GET', '/', function () {
+    return ['message' => 'Welcome to the API Gateway'];
+});
 
 // ===================== products =========================
 $router->addRoute('GET', '/api/products', [

@@ -12,7 +12,7 @@ class Database
     private $servername = '127.0.0.1:5433';
     private $username = 'root';
     private $password = '';
-    private $dbname = 'Ecommerce';
+    private $dbname = 'ecommerce';
     public $conn;
 
     public function __construct()

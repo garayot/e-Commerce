@@ -1,18 +1,13 @@
 {
-    "name": "csbay/e-commerce",
-    "autoload": {
-        "psr-4": {
-            "Csbay\\ECommerce\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "raviejay",
-            "email": "puspusraviejay@gmail.com"
-        }
-    ],
-    "require": {
-        "firebase/php-jwt": "^6.10",
-        "phpmailer/phpmailer": "^6.9"
-    }
+	"autoload": {
+		"psr-4": {
+			"Api\\Controllers\\": "api-gateway/UserAuth/api/Controllers/",
+			"Auth\\": "api-gateway/UserAuth/Auth/",
+			"Database\\": "api-gateway/utils/"
+		}
+	},
+	"require": {
+		"phpmailer/phpmailer": "^6.5",
+		"firebase/php-jwt": "^5.4"
+	}
 }

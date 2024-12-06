@@ -1,5 +1,5 @@
-#!/usr/bin/env php
 <?php
+require_once __DIR__ . '/../vendor/autoload.php'; // Include Composer's autoload file
 require_once 'routes.php';
 require_once 'middlewares/cache.php';
 require_once 'middlewares/auth.php';
@@ -7,32 +7,35 @@ require_once 'middlewares/rate_limit.php';
 require_once 'middlewares/sanitize.php';
 require_once 'middlewares/cors.php';
 
+// Include the file where the Database class is defined
+require_once __DIR__ . '/utils/db.php';
+
+use Database\Database;
+
 // Include the file where logRequestResponse is defined
 require_once __DIR__ . '/utils/logger.php';
 
 // Include all controllers
+//require_once __DIR__ .
+'../../api-gateway/Product/api/Controllers/ProductCatalogController.php';
 require_once __DIR__ .
-    '/../Product/api/Controllers/ProductCatalogController.php';
-require_once __DIR__ . '/../Product/api/Controllers/SearchEngineController.php';
+    '../../api-gateway/Product/api/Controllers/SearchEngineController.php';
 require_once __DIR__ .
-    '/../Product/api/Controllers/SellerProductController.php';
-require_once __DIR__ . '/../Product/api/Controllers/SellerSearchController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/AuthController.php';
+    '../../api-gateway/Product/api/Controllers/SellerProductController.php';
 require_once __DIR__ .
-    '/../UserAuth/api/Controllers/PasswordResetController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserAssignController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserListController.php';
-require_once __DIR__ . '/../UserAuth/api/Controllers/UserProfileController.php';
+    '../../api-gateway/Product/api/Controllers/SellerSearchController.php';
 
-use Product\Api\Controllers\ProductCatalogController;
-use Product\Api\Controllers\SearchEngineController;
-use Product\Api\Controllers\SellerProductController;
-use Product\Api\Controllers\SellerSearchController;
-use UserAuth\Api\Controllers\AuthController;
-use UserAuth\Api\Controllers\PasswordResetController;
-use UserAuth\Api\Controllers\UserAssignController;
-use UserAuth\Api\Controllers\UserListController;
-use UserAuth\Api\Controllers\UserProfileController;
+// auth controllers
+require_once __DIR__ .
+    '../../api-gateway/UserAuth/api/Controllers/AuthController.php';
+require_once __DIR__ .
+    '../../api-gateway/UserAuth/api/Controllers/PasswordResetController.php';
+require_once __DIR__ .
+    '../../api-gateway/UserAuth/api/Controllers/UserAssignController.php';
+require_once __DIR__ .
+    '../../api-gateway/UserAuth/api/Controllers/UserListController.php';
+require_once __DIR__ .
+    '../../api-gateway/UserAuth/api/Controllers/UserProfileController.php';
 
 $requestUri = $_SERVER['REQUEST_URI'];
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -62,8 +65,11 @@ if (file_exists($cacheFile)) {
 checkRateLimit();
 sanitizeInputs();
 
-// conditionally apply the authenticate middleware
-$publicRoutes = ['/api/auth/signup', '/api/auth/signin'];
+$publicRoutes = [
+    '/api/auth/signup',
+    '/api/auth/signin',
+    '/api/auth/password-reset',
+];
 
 if (!in_array($requestUri, $publicRoutes)) {
     authenticate();
@@ -73,6 +79,10 @@ $response = ['error' => 'Endpoint not found']; // default response
 $statusCode = 404; // default status code
 $routeFound = false;
 
+$db = new Database();
+
+$startTime = microtime(true); // Start time for logging
+
 foreach ($router->getRoutes() as $route) {
     if (
         preg_match("#^{$route['path']}$#", $requestUri) &&
@@ -80,7 +90,7 @@ foreach ($router->getRoutes() as $route) {
     ) {
         $routeFound = true;
         list($controller, $method) = $route['action'];
-        $controllerInstance = new $controller();
+        $controllerInstance = new $controller($db);
         $response = $controllerInstance->$method(
             json_decode($requestBody, true)
         );
@@ -94,7 +104,10 @@ if (!$routeFound) {
     $statusCode = 404;
 }
 
+$endTime = microtime(true); // End time for logging
+$executionTime = $endTime - $startTime; // Calculate execution time
+error_log("Request to $requestUri took $executionTime seconds."); // Log execution time
+
 logRequestResponse($response, $statusCode);
 http_response_code($statusCode);
 echo json_encode($response);
-

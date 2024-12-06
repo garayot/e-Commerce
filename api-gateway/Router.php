@@ -3,6 +3,7 @@
 class Router
 {
     private $routes = [];
+    private $db;
 
     public function __construct($db)
     {

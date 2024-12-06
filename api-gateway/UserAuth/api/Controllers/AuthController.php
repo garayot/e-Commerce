@@ -2,13 +2,14 @@
 
 namespace Api\Controllers;
 
+use Database\Database;
 use Auth\UserAuthentication;
 
 class AuthController
 {
     private $auth;
 
-    public function __construct($db)
+    public function __construct(Database $db)
     {
         $this->auth = new UserAuthentication($db);
     }
@@ -33,19 +34,16 @@ class AuthController
                         'Invalid email address. Only Gmail accounts are allowed.',
                 ];
             }
-
             if (!preg_match('/^09[0-9]{9}$/', $data['phone'])) {
                 return [
                     'error' =>
                         'Invalid phone number. It must start with 09 and be 11 digits long.',
                 ];
             }
-
             $password_error = $this->validatePassword($data['password']);
             if ($password_error) {
                 return ['error' => $password_error];
             }
-
             return $this->auth->register(
                 $data['first_name'],
                 $data['last_name'],
@@ -68,17 +66,6 @@ class AuthController
         }
     }
 
-    public function verifyCode($data)
-    {
-        if (!empty($data['user_uuid']) && !empty($data['verification_code'])) {
-            return $this->auth->verifyCode(
-                $data['user_uuid'],
-                $data['verification_code']
-            );
-        } else {
-            return ['error' => 'Invalid input data'];
-        }
-    }
     // Function to validate password
     public function validatePassword($password)
     {
@@ -91,17 +78,9 @@ class AuthController
         if (!preg_match('/[a-z]/', $password)) {
             return 'Password must contain at least one lowercase letter';
         }
-        if (!preg_match('/\d/', $password)) {
-            return 'Password must contain at least one digit';
+        if (!preg_match('/[0-9]/', $password)) {
+            return 'Password must contain at least one number';
         }
-        if (!preg_match('/[\W]/', $password)) {
-            return 'Password must contain at least one special character';
-        }
-        return null; // Password is valid
-    }
-
-    public function logout()
-    {
-        return $this->auth->logout(); // Call the logout method without passing the token
+        return null;
     }
 }

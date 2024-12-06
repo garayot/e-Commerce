@@ -2,7 +2,7 @@
 function getBackendServer()
 {
     // backend servers
-    $servers = ['http://localhost:8000'];
+    $servers = ['http://localhost:8000', 'http://localhost:8080'];
 
     // round-robin load balance
     $cacheFile = __DIR__ . '/cache/load_balancer_state.json';

@@ -2,9 +2,7 @@
 
 namespace Auth;
 
-require '../vendor/autoload.php';
-
-use database\Database;
+use Database\Database;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Firebase\JWT\JWT;
@@ -27,7 +25,7 @@ class UserAuthentication
     {
         $payload = [
             'iat' => time(),
-            'exp' => time() + (60 * 60),
+            'exp' => time() + 60 * 60,
             'user_uuid' => $user_uuid,
         ];
 
@@ -36,7 +34,9 @@ class UserAuthentication
 
     private function checkVerificationExpiration($user_uuid)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()");
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()'
+        );
         $stmt->bind_param('s', $user_uuid);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -47,7 +47,6 @@ class UserAuthentication
             return ['valid' => false];
         }
     }
-
 
     private function sendVerificationEmail($email, $code)
     {
@@ -70,7 +69,9 @@ class UserAuthentication
             $this->mail->send();
             return true;
         } catch (Exception $e) {
-            error_log("Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            error_log(
+                "Message could not be sent. Mailer Error: {$this->mail->ErrorInfo}"
+            );
             return false;
         }
     }
@@ -78,7 +79,7 @@ class UserAuthentication
     // Handle Login
     public function login($email, $password)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt = $this->conn->prepare('SELECT * FROM users WHERE email = ?');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -86,49 +87,81 @@ class UserAuthentication
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
 
-
             if (password_verify($password, $user['password'])) {
-
-                $verificationStatus = $this->checkVerificationExpiration($user['user_uuid']);
+                $verificationStatus = $this->checkVerificationExpiration(
+                    $user['user_uuid']
+                );
                 if ($verificationStatus['valid']) {
-
-                    $stmt = $this->conn->prepare("SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()");
+                    $stmt = $this->conn->prepare(
+                        'SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()'
+                    );
                     $stmt->bind_param('s', $user['user_uuid']);
                     $stmt->execute();
                     $result = $stmt->get_result();
                     $verification = $result->fetch_assoc();
 
-                    if ($verificationStatus['valid'] && ($verification['verified'] == 0)) {
-                        return ['error' => 'Please verify your account before logging in'];
+                    if (
+                        $verificationStatus['valid'] &&
+                        $verification['verified'] == 0
+                    ) {
+                        return [
+                            'error' =>
+                                'Please verify your account before logging in',
+                        ];
                     }
 
                     $token = $this->generateJWT($user['user_uuid']);
                     $id = bin2hex(random_bytes(16));
                     $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
-                    $stmt = $this->conn->prepare("INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (?, ?, ?, ?)");
-                    $stmt->bind_param('ssss', $id, $user['user_uuid'], $token, $expires_at);
+                    $stmt = $this->conn->prepare(
+                        'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (?, ?, ?, ?)'
+                    );
+                    $stmt->bind_param(
+                        'ssss',
+                        $id,
+                        $user['user_uuid'],
+                        $token,
+                        $expires_at
+                    );
                     $stmt->execute();
 
                     return ['message' => 'Login successful', 'token' => $token];
                 } else {
-
                     date_default_timezone_set('UTC');
 
                     $verification_code = random_int(100000, 999999);
                     $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
-
-                    $stmt = $this->conn->prepare("INSERT INTO verification_codes (id, user_uuid, code, expires_at) VALUES (UUID(), ?, ?, ?)");
-                    $stmt->bind_param('sss', $user['user_uuid'], $verification_code, $expires_at);
+                    $stmt = $this->conn->prepare(
+                        'INSERT INTO verification_codes (id, user_uuid, code, expires_at) VALUES (UUID(), ?, ?, ?)'
+                    );
+                    $stmt->bind_param(
+                        'sss',
+                        $user['user_uuid'],
+                        $verification_code,
+                        $expires_at
+                    );
 
                     if ($stmt->execute()) {
-                        if ($this->sendVerificationEmail($email, $verification_code)) {
-                            return ['message' => 'Verification code sent', 'user_uuid' => $user['user_uuid']];
+                        if (
+                            $this->sendVerificationEmail(
+                                $email,
+                                $verification_code
+                            )
+                        ) {
+                            return [
+                                'message' => 'Verification code sent',
+                                'user_uuid' => $user['user_uuid'],
+                            ];
                         } else {
-                            return ['error' => 'Failed to send verification code'];
+                            return [
+                                'error' => 'Failed to send verification code',
+                            ];
                         }
                     } else {
-                        return ['error' => 'Failed to generate verification code'];
+                        return [
+                            'error' => 'Failed to generate verification code',
+                        ];
                     }
                 }
             } else {
@@ -142,7 +175,9 @@ class UserAuthentication
     // Verify Code
     public function verifyCode($user_uuid, $verification_code)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM verification_codes WHERE user_uuid = ? AND code = ? AND expires_at > NOW()");
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM verification_codes WHERE user_uuid = ? AND code = ? AND expires_at > NOW()'
+        );
         $stmt->bind_param('ss', $user_uuid, $verification_code);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -151,16 +186,17 @@ class UserAuthentication
             $token = $this->generateJWT($user_uuid);
             $id = bin2hex(random_bytes(16));
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
-            $stmt = $this->conn->prepare("INSERT INTO session_token (id,user_uuid, token, expires_at) VALUES (?, ?, ?, ?)");
+            $stmt = $this->conn->prepare(
+                'INSERT INTO session_token (id,user_uuid, token, expires_at) VALUES (?, ?, ?, ?)'
+            );
             $stmt->bind_param('ssss', $id, $user_uuid, $token, $expires_at);
             $stmt->execute();
 
-
-            $stmt = $this->conn->prepare("UPDATE verification_codes SET used = 1, verified = 1 WHERE user_uuid = ? AND code = ?");
+            $stmt = $this->conn->prepare(
+                'UPDATE verification_codes SET used = 1, verified = 1 WHERE user_uuid = ? AND code = ?'
+            );
             $stmt->bind_param('ss', $user_uuid, $verification_code);
             $stmt->execute();
-
-
 
             return ['message' => 'Verification successful', 'token' => $token];
         } else {
@@ -168,10 +204,23 @@ class UserAuthentication
         }
     }
 
-    public function register($first_name, $last_name, $email, $phone_number, $address, $password)
-    {
+    public function register(
+        $first_name,
+        $last_name,
+        $email,
+        $phone_number,
+        $address,
+        $password
+    ) {
         // Validate input
-        if (empty($first_name) || empty($last_name) || empty($email) || empty($phone_number) || empty($address) || empty($password)) {
+        if (
+            empty($first_name) ||
+            empty($last_name) ||
+            empty($email) ||
+            empty($phone_number) ||
+            empty($address) ||
+            empty($password)
+        ) {
             return ['error' => 'Invalid input data'];
         }
 
@@ -179,7 +228,7 @@ class UserAuthentication
         $user_uuid = bin2hex(random_bytes(16));
 
         // Check if the email is already in use
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt = $this->conn->prepare('SELECT * FROM users WHERE email = ?');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -189,7 +238,9 @@ class UserAuthentication
         }
 
         // Check if the phone number is already in use
-        $stmt = $this->conn->prepare("SELECT * FROM users WHERE phone_number = ?");
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM users WHERE phone_number = ?'
+        );
         $stmt->bind_param('s', $phone_number);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -199,8 +250,19 @@ class UserAuthentication
         }
 
         // If both email and phone number are unique, insert the new user
-        $stmt = $this->conn->prepare("INSERT INTO users (user_uuid, first_name, last_name, email, phone_number, address, password) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('sssssss', $user_uuid, $first_name, $last_name, $email, $phone_number, $address, $hashed_password);
+        $stmt = $this->conn->prepare(
+            'INSERT INTO users (user_uuid, first_name, last_name, email, phone_number, address, password) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->bind_param(
+            'sssssss',
+            $user_uuid,
+            $first_name,
+            $last_name,
+            $email,
+            $phone_number,
+            $address,
+            $hashed_password
+        );
 
         if ($stmt->execute()) {
             return ['message' => 'User registered successfully'];
@@ -209,26 +271,27 @@ class UserAuthentication
         }
     }
 
-
     public function logout()
     {
-
         $headers = apache_request_headers();
 
-
-        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+        if (
+            isset($headers['Authorization']) &&
+            preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)
+        ) {
             $token = $matches[1];
 
-
-            $stmt = $this->conn->prepare("SELECT * FROM session_token WHERE token = ?");
+            $stmt = $this->conn->prepare(
+                'SELECT * FROM session_token WHERE token = ?'
+            );
             $stmt->bind_param('s', $token);
             $stmt->execute();
             $result = $stmt->get_result();
 
-
             if ($result->num_rows > 0) {
-
-                $stmt = $this->conn->prepare("DELETE FROM session_token WHERE token = ?");
+                $stmt = $this->conn->prepare(
+                    'DELETE FROM session_token WHERE token = ?'
+                );
                 $stmt->bind_param('s', $token);
 
                 if ($stmt->execute()) {
@@ -237,11 +300,9 @@ class UserAuthentication
                     return ['error' => 'Logout failed due to a server issue'];
                 }
             } else {
-
                 return ['error' => 'Invalid or expired token'];
             }
         } else {
-
             return ['error' => 'Authorization token not provided or invalid'];
         }
     }
