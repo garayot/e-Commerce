@@ -1,6 +1,6 @@
 <?php
 require_once 'Router.php';
-require_once __DIR__ . '/utils/db.php'; // Ensure this path is correct
+require_once __DIR__ . '/utils/db.php';
 
 use Database\Database;
 use Api\Controllers\ProductCatalogController;
@@ -30,6 +30,7 @@ $router->addRoute('GET', '/api/products/{id}', [
     ProductCatalogController::class,
     'getProductDetails',
 ]);
+
 $router->addRoute('POST', '/api/products', [
     ProductCatalogController::class,
     'createProduct',
@@ -46,17 +47,17 @@ $router->addRoute('DELETE', '/api/products/{id}', [
 // search
 $router->addRoute('GET', '/api/search', [
     SearchEngineController::class,
-    'search',
+    'searchProductsByBrand',
 ]);
 
 // seller product apis
 $router->addRoute('GET', '/api/seller/products', [
     SellerProductController::class,
-    'listSellerProducts',
+    'getListedProducts',
 ]);
 $router->addRoute('GET', '/api/seller/products/{id}', [
     SellerProductController::class,
-    'getSellerProduct',
+    'getProductDetails',
 ]);
 
 // seller search

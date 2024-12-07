@@ -7,17 +7,17 @@ require_once 'middlewares/rate_limit.php';
 require_once 'middlewares/sanitize.php';
 require_once 'middlewares/cors.php';
 
-// Include the file where the Database class is defined
+// include file where the Database class is defined
 require_once __DIR__ . '/utils/db.php';
 
 use Database\Database;
 
-// Include the file where logRequestResponse is defined
+// include file where logRequestResponse is defined
 require_once __DIR__ . '/utils/logger.php';
 
-// Include all controllers
-//require_once __DIR__ .
-'../../api-gateway/Product/api/Controllers/ProductCatalogController.php';
+// product controllers
+require_once __DIR__ .
+    '../../api-gateway/Product/api/Controllers/ProductCatalogController.php';
 require_once __DIR__ .
     '../../api-gateway/Product/api/Controllers/SearchEngineController.php';
 require_once __DIR__ .
@@ -41,7 +41,7 @@ $requestUri = $_SERVER['REQUEST_URI'];
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestBody = file_get_contents('php://input');
 
-// Ensure the cache directory exists
+// ensuring the cache directory exists
 $cacheDir = __DIR__ . '/../cache';
 if (!is_dir($cacheDir)) {
     if (!mkdir($cacheDir, 0777, true) && !is_dir($cacheDir)) {
@@ -84,15 +84,18 @@ $db = new Database();
 $startTime = microtime(true); // Start time for logging
 
 foreach ($router->getRoutes() as $route) {
+    $pattern = preg_replace('#\{[^\}]+\}#', '([^/]+)', $route['path']);
     if (
-        preg_match("#^{$route['path']}$#", $requestUri) &&
+        preg_match("#^{$pattern}$#", $requestUri, $matches) &&
         $route['method'] === $requestMethod
     ) {
         $routeFound = true;
         list($controller, $method) = $route['action'];
         $controllerInstance = new $controller($db);
+        array_shift($matches); // Remove the full match
         $response = $controllerInstance->$method(
-            json_decode($requestBody, true)
+            json_decode($requestBody, true),
+            ...$matches
         );
         $statusCode = http_response_code();
         break;

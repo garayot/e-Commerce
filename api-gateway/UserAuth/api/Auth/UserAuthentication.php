@@ -6,6 +6,7 @@ use Database\Database;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Firebase\JWT\JWT;
+use PDO;
 
 class UserAuthentication
 {
@@ -35,14 +36,14 @@ class UserAuthentication
     private function checkVerificationExpiration($user_uuid)
     {
         $stmt = $this->conn->prepare(
-            'SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()'
+            'SELECT * FROM verification_codes WHERE user_uuid = :user_uuid AND expires_at > NOW()'
         );
-        $stmt->bind_param('s', $user_uuid);
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows === 1) {
-            return ['valid' => true, 'code' => $result->fetch_assoc()['code']];
+        if ($result) {
+            return ['valid' => true, 'code' => $result['code']];
         } else {
             return ['valid' => false];
         }
@@ -79,26 +80,29 @@ class UserAuthentication
     // Handle Login
     public function login($email, $password)
     {
-        $stmt = $this->conn->prepare('SELECT * FROM users WHERE email = ?');
-        $stmt->bind_param('s', $email);
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM users WHERE email = :email'
+        );
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows === 1) {
-            $user = $result->fetch_assoc();
-
+        if ($user) {
             if (password_verify($password, $user['password'])) {
                 $verificationStatus = $this->checkVerificationExpiration(
                     $user['user_uuid']
                 );
                 if ($verificationStatus['valid']) {
                     $stmt = $this->conn->prepare(
-                        'SELECT * FROM verification_codes WHERE user_uuid = ? AND expires_at > NOW()'
+                        'SELECT * FROM verification_codes WHERE user_uuid = :user_uuid AND expires_at > NOW()'
                     );
-                    $stmt->bind_param('s', $user['user_uuid']);
+                    $stmt->bindValue(
+                        ':user_uuid',
+                        $user['user_uuid'],
+                        PDO::PARAM_STR
+                    );
                     $stmt->execute();
-                    $result = $stmt->get_result();
-                    $verification = $result->fetch_assoc();
+                    $verification = $stmt->fetch(PDO::FETCH_ASSOC);
 
                     if (
                         $verificationStatus['valid'] &&
@@ -114,14 +118,19 @@ class UserAuthentication
                     $id = bin2hex(random_bytes(16));
                     $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
                     $stmt = $this->conn->prepare(
-                        'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (?, ?, ?, ?)'
+                        'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
                     );
-                    $stmt->bind_param(
-                        'ssss',
-                        $id,
+                    $stmt->bindValue(':id', $id, PDO::PARAM_STR);
+                    $stmt->bindValue(
+                        ':user_uuid',
                         $user['user_uuid'],
-                        $token,
-                        $expires_at
+                        PDO::PARAM_STR
+                    );
+                    $stmt->bindValue(':token', $token, PDO::PARAM_STR);
+                    $stmt->bindValue(
+                        ':expires_at',
+                        $expires_at,
+                        PDO::PARAM_STR
                     );
                     $stmt->execute();
 
@@ -133,13 +142,22 @@ class UserAuthentication
                     $expires_at = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
                     $stmt = $this->conn->prepare(
-                        'INSERT INTO verification_codes (id, user_uuid, code, expires_at) VALUES (UUID(), ?, ?, ?)'
+                        'INSERT INTO verification_codes (id, user_uuid, code, expires_at) VALUES (UUID(), :user_uuid, :code, :expires_at)'
                     );
-                    $stmt->bind_param(
-                        'sss',
+                    $stmt->bindValue(
+                        ':user_uuid',
                         $user['user_uuid'],
+                        PDO::PARAM_STR
+                    );
+                    $stmt->bindValue(
+                        ':code',
                         $verification_code,
-                        $expires_at
+                        PDO::PARAM_INT
+                    );
+                    $stmt->bindValue(
+                        ':expires_at',
+                        $expires_at,
+                        PDO::PARAM_STR
                     );
 
                     if ($stmt->execute()) {
@@ -176,26 +194,31 @@ class UserAuthentication
     public function verifyCode($user_uuid, $verification_code)
     {
         $stmt = $this->conn->prepare(
-            'SELECT * FROM verification_codes WHERE user_uuid = ? AND code = ? AND expires_at > NOW()'
+            'SELECT * FROM verification_codes WHERE user_uuid = :user_uuid AND code = :code AND expires_at > NOW()'
         );
-        $stmt->bind_param('ss', $user_uuid, $verification_code);
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
+        $stmt->bindValue(':code', $verification_code, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows === 1) {
+        if ($result) {
             $token = $this->generateJWT($user_uuid);
             $id = bin2hex(random_bytes(16));
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
             $stmt = $this->conn->prepare(
-                'INSERT INTO session_token (id,user_uuid, token, expires_at) VALUES (?, ?, ?, ?)'
+                'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
             );
-            $stmt->bind_param('ssss', $id, $user_uuid, $token, $expires_at);
+            $stmt->bindValue(':id', $id, PDO::PARAM_STR);
+            $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
+            $stmt->bindValue(':token', $token, PDO::PARAM_STR);
+            $stmt->bindValue(':expires_at', $expires_at, PDO::PARAM_STR);
             $stmt->execute();
 
             $stmt = $this->conn->prepare(
-                'UPDATE verification_codes SET used = 1, verified = 1 WHERE user_uuid = ? AND code = ?'
+                'UPDATE verification_codes SET used = 1, verified = 1 WHERE user_uuid = :user_uuid AND code = :code'
             );
-            $stmt->bind_param('ss', $user_uuid, $verification_code);
+            $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
+            $stmt->bindValue(':code', $verification_code, PDO::PARAM_INT);
             $stmt->execute();
 
             return ['message' => 'Verification successful', 'token' => $token];
@@ -228,41 +251,40 @@ class UserAuthentication
         $user_uuid = bin2hex(random_bytes(16));
 
         // Check if the email is already in use
-        $stmt = $this->conn->prepare('SELECT * FROM users WHERE email = ?');
-        $stmt->bind_param('s', $email);
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM users WHERE email = :email'
+        );
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows > 0) {
+        if ($result) {
             return ['error' => 'Email is already in use'];
         }
 
         // Check if the phone number is already in use
         $stmt = $this->conn->prepare(
-            'SELECT * FROM users WHERE phone_number = ?'
+            'SELECT * FROM users WHERE phone_number = :phone_number'
         );
-        $stmt->bind_param('s', $phone_number);
+        $stmt->bindValue(':phone_number', $phone_number, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows > 0) {
+        if ($result) {
             return ['error' => 'Phone number is already in use'];
         }
 
         // If both email and phone number are unique, insert the new user
         $stmt = $this->conn->prepare(
-            'INSERT INTO users (user_uuid, first_name, last_name, email, phone_number, address, password) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO users (user_uuid, first_name, last_name, email, phone_number, address, password) VALUES (:user_uuid, :first_name, :last_name, :email, :phone_number, :address, :password)'
         );
-        $stmt->bind_param(
-            'sssssss',
-            $user_uuid,
-            $first_name,
-            $last_name,
-            $email,
-            $phone_number,
-            $address,
-            $hashed_password
-        );
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
+        $stmt->bindValue(':first_name', $first_name, PDO::PARAM_STR);
+        $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':phone_number', $phone_number, PDO::PARAM_STR);
+        $stmt->bindValue(':address', $address, PDO::PARAM_STR);
+        $stmt->bindValue(':password', $hashed_password, PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             return ['message' => 'User registered successfully'];
@@ -282,17 +304,17 @@ class UserAuthentication
             $token = $matches[1];
 
             $stmt = $this->conn->prepare(
-                'SELECT * FROM session_token WHERE token = ?'
+                'SELECT * FROM session_token WHERE token = :token'
             );
-            $stmt->bind_param('s', $token);
+            $stmt->bindValue(':token', $token, PDO::PARAM_STR);
             $stmt->execute();
-            $result = $stmt->get_result();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($result->num_rows > 0) {
+            if ($result) {
                 $stmt = $this->conn->prepare(
-                    'DELETE FROM session_token WHERE token = ?'
+                    'DELETE FROM session_token WHERE token = :token'
                 );
-                $stmt->bind_param('s', $token);
+                $stmt->bindValue(':token', $token, PDO::PARAM_STR);
 
                 if ($stmt->execute()) {
                     return ['message' => 'Logout successful'];

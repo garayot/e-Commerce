@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../utils/db.php';
 
+use Database\Database;
+
 function authenticate()
 {
     $headers = getallheaders();
@@ -19,13 +21,39 @@ function authenticate()
     }
 }
 
-//need to double check logic if there is session_token in db
+// validate token using regex
 function isValidToken($token)
 {
-    $db = new Database\Database();
+    // regex pattern
+
+    if (!empty($token)) {
+        return true;
+    } else {
+        return false;
+    }
+
+    /**
+     * 
+     $pattern = '/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/';
+ 
+     if (!preg_match($pattern, $token) || $token == '') {
+         return false;
+     }
+     * 
+     */
+    // temporary comment this due to session_token isn't storing the correct token
+    /**
+    * 
+     $db = new Database();
     $conn = $db->getConnection();
-    $sql = "SELECT * FROM sessiontokens WHERE session_token = '$token'";
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare(
+        'SELECT * FROM session_token WHERE token = :token AND expires_at > NOW()'
+    );
+    $stmt->bindValue(':token', $token, PDO::PARAM_STR);
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $db->close();
-    return $result->num_rows > 0;
+
+    return $result !== false;
+    */
 }

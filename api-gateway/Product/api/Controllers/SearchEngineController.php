@@ -3,6 +3,7 @@
 namespace Api\Controllers;
 
 use Database\Database;
+use PDO;
 
 class SearchEngineController
 {
@@ -21,18 +22,16 @@ class SearchEngineController
      */
     public function searchProductsByName($query)
     {
-        $escapedQuery = $this->db->real_escape_string(strtolower($query)); // Escape and lowercase input
-
         $sql = "
             SELECT p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p 
-            WHERE SOUNDEX(product_name) = SOUNDEX(?) 
-               OR SOUNDEX(description) = SOUNDEX(?)";
+            WHERE SOUNDEX(product_name) = SOUNDEX(:query) 
+               OR SOUNDEX(description) = SOUNDEX(:query)";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bind_param('ss', $escapedQuery, $escapedQuery);
+        $stmt->bindValue(':query', $query, PDO::PARAM_STR);
         $stmt->execute();
-        $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return $this->formatSearchResults($query, $products);
     }
@@ -47,23 +46,26 @@ class SearchEngineController
      */
     public function searchProductsWithPriceRange($query, $min_price, $max_price)
     {
-        $escapedQuery = $this->db->real_escape_string($query);
-        $min_price = floatval($min_price);
-        $max_price = floatval($max_price);
-
         $sql = "
             SELECT p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p 
-            WHERE (product_name LIKE ? OR description LIKE ?) 
-            AND price BETWEEN ? AND ?";
+            WHERE (product_name LIKE :query OR description LIKE :query) 
+            AND price BETWEEN :min_price AND :max_price";
 
         $stmt = $this->db->prepare($sql);
-        $likeQuery = "%$escapedQuery%";
-        $stmt->bind_param('ssdd', $likeQuery, $likeQuery, $min_price, $max_price);
+        $likeQuery = "%$query%";
+        $stmt->bindValue(':query', $likeQuery, PDO::PARAM_STR);
+        $stmt->bindValue(':min_price', $min_price, PDO::PARAM_STR);
+        $stmt->bindValue(':max_price', $max_price, PDO::PARAM_STR);
         $stmt->execute();
-        $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return $this->formatSearchResults($query, $products, $min_price, $max_price);
+        return $this->formatSearchResults(
+            $query,
+            $products,
+            $min_price,
+            $max_price
+        );
     }
 
     /**
@@ -72,21 +74,25 @@ class SearchEngineController
      * @param string $brand_name The brand name.
      * @return array The search results.
      */
-    public function searchProductsByBrand($brand_name)
+    public function searchProductsByBrand($data)
     {
-        $escapedBrand = $this->db->real_escape_string(strtolower($brand_name));
+        if (!isset($data['brand_name'])) {
+            return ['error' => 'Brand name is required'];
+        }
+
+        $brand_name = $data['brand_name'];
 
         $sql = "
             SELECT p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p
             JOIN brands b ON p.brand_id = b.brand_id
-            WHERE b.brand_name LIKE ?";
+            WHERE b.brand_name LIKE :brand_name";
 
         $stmt = $this->db->prepare($sql);
-        $likeBrand = "%$escapedBrand%";
-        $stmt->bind_param('s', $likeBrand);
+        $likeBrand = "%$brand_name%";
+        $stmt->bindValue(':brand_name', $likeBrand, PDO::PARAM_STR);
         $stmt->execute();
-        $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return $this->formatSearchResults($brand_name, $products);
     }
@@ -100,20 +106,18 @@ class SearchEngineController
      */
     public function searchProductsBySize($query, $size)
     {
-        $escapedQuery = $this->db->real_escape_string($query);
-        $escapedSize = $this->db->real_escape_string($size);
-
         $sql = "
             SELECT p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p
-            WHERE (p.product_name LIKE ? OR p.description LIKE ?)
-            AND p.size = ?";
+            WHERE (p.product_name LIKE :query OR p.description LIKE :query)
+            AND p.size = :size";
 
         $stmt = $this->db->prepare($sql);
-        $likeQuery = "%$escapedQuery%";
-        $stmt->bind_param('sss', $likeQuery, $likeQuery, $escapedSize);
+        $likeQuery = "%$query%";
+        $stmt->bindValue(':query', $likeQuery, PDO::PARAM_STR);
+        $stmt->bindValue(':size', $size, PDO::PARAM_STR);
         $stmt->execute();
-        $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return $this->formatSearchResults($query, $products, $size);
     }
@@ -130,17 +134,17 @@ class SearchEngineController
     {
         $results = array_map(function ($product) {
             return [
-                'product_name'   => (string)$product['product_name'],
-                'description'    => (string)$product['description'],
-                'price'          => (float)$product['price'],
-                'stock_quantity' => (int)$product['stock_quantity'],
-                'image_url'      => (string)$product['image_url']
+                'product_name' => (string) $product['product_name'],
+                'description' => (string) $product['description'],
+                'price' => (float) $product['price'],
+                'stock_quantity' => (int) $product['stock_quantity'],
+                'image_url' => (string) $product['image_url'],
             ];
         }, $products);
 
         $response = [
-            'query'   => (string)$query,
-            'results' => $results
+            'query' => (string) $query,
+            'results' => $results,
         ];
 
         if ($extra) {

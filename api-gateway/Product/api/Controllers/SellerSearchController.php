@@ -2,10 +2,9 @@
 
 namespace Api\Controllers;
 
-require_once __DIR__ . '/../../../UserAuth/Auth/UserProfile.php';
-
 use Database\Database;
 use Auth\UserProfile;
+use PDO;
 
 class SellerSearchController
 {
@@ -28,7 +27,10 @@ class SellerSearchController
     private function getBearerToken()
     {
         $headers = getallheaders();
-        if (isset($headers['Authorization']) && preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+        if (
+            isset($headers['Authorization']) &&
+            preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)
+        ) {
             return $matches[1];
         }
         return null;
@@ -45,17 +47,23 @@ class SellerSearchController
         $user_uuid = $this->userProfile->validateToken($token);
 
         if (!$user_uuid) {
-            return ['error' => 'Unauthorized access - Invalid or expired token'];
+            return [
+                'error' => 'Unauthorized access - Invalid or expired token',
+            ];
         }
 
-        $stmt = $this->db->prepare("SELECT role FROM users WHERE user_uuid = ?");
-        $stmt->bind_param('s', $user_uuid);
+        $stmt = $this->db->prepare(
+            'SELECT role FROM users WHERE user_uuid = :user_uuid'
+        );
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || $user['role'] !== self::ROLE_SELLER) {
-            return ['error' => 'Unauthorized access - Only sellers are allowed to perform this action'];
+            return [
+                'error' =>
+                    'Unauthorized access - Only sellers are allowed to perform this action',
+            ];
         }
 
         return $user_uuid;
@@ -70,27 +78,29 @@ class SellerSearchController
     public function searchProductsByName($query)
     {
         $user_uuid = $this->validateSeller();
-        if (is_array($user_uuid)) return $user_uuid;
+        if (is_array($user_uuid)) {
+            return $user_uuid;
+        }
 
-        // Escape and sanitize the query
-        $escapedQuery = $this->db->real_escape_string(strtolower($query));
-
-        $stmt = $this->db->prepare("
+        $sql = "
             SELECT p.product_id, p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p 
-            WHERE (SOUNDEX(p.product_name) = SOUNDEX(?) OR SOUNDEX(p.description) = SOUNDEX(?))
-              AND p.user_uuid = ?
-        ");
-        
-        $stmt->bind_param('sss', $escapedQuery, $escapedQuery, $user_uuid);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $products = $result->fetch_all(MYSQLI_ASSOC);
+            WHERE (SOUNDEX(p.product_name) = SOUNDEX(:query) OR SOUNDEX(p.description) = SOUNDEX(:query))
+              AND p.user_uuid = :user_uuid
+        ";
 
-        return empty($products) ? ['error' => 'No products found'] : [
-            'query' => (string)$query,
-            'results' => array_map([$this, 'mapProduct'], $products)
-        ];
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':query', $query, PDO::PARAM_STR);
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
+        $stmt->execute();
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return empty($products)
+            ? ['error' => 'No products found']
+            : [
+                'query' => (string) $query,
+                'results' => array_map([$this, 'mapProduct'], $products),
+            ];
     }
 
     /**
@@ -104,31 +114,32 @@ class SellerSearchController
     public function searchProductsWithPriceRange($query, $min_price, $max_price)
     {
         $user_uuid = $this->validateSeller();
-        if (is_array($user_uuid)) return $user_uuid;
+        if (is_array($user_uuid)) {
+            return $user_uuid;
+        }
 
-        // Escape and sanitize the inputs
-        $escapedQuery = $this->db->real_escape_string(strtolower($query));
-        $min_price = (float)$min_price;
-        $max_price = (float)$max_price;
-
-        $stmt = $this->db->prepare("
+        $sql = "
             SELECT p.product_id, p.product_name, p.description, p.price, p.stock_quantity, p.image_url
             FROM products p 
-            WHERE (p.product_name LIKE CONCAT('%', ?, '%') OR p.description LIKE CONCAT('%', ?, '%'))
-              AND p.price BETWEEN ? AND ?
-              AND p.user_uuid = ?
-        ");
-        
-        $stmt->bind_param('sddss', $escapedQuery, $escapedQuery, $min_price, $max_price, $user_uuid);
+            WHERE (p.product_name LIKE :query OR p.description LIKE :query)
+              AND p.price BETWEEN :min_price AND :max_price
+              AND p.user_uuid = :user_uuid
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $likeQuery = "%$query%";
+        $stmt->bindValue(':query', $likeQuery, PDO::PARAM_STR);
+        $stmt->bindValue(':min_price', $min_price, PDO::PARAM_STR);
+        $stmt->bindValue(':max_price', $max_price, PDO::PARAM_STR);
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $products = $result->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'query' => (string)$query, 
-            'min_price' => (float)$min_price, 
-            'max_price' => (float)$max_price, 
-            'results' => array_map([$this, 'mapProduct'], $products)
+            'query' => (string) $query,
+            'min_price' => (float) $min_price,
+            'max_price' => (float) $max_price,
+            'results' => array_map([$this, 'mapProduct'], $products),
         ];
     }
 
@@ -141,26 +152,30 @@ class SellerSearchController
     public function searchProductsByCategory($category_name)
     {
         $user_uuid = $this->validateSeller();
-        if (is_array($user_uuid)) return $user_uuid;
+        if (is_array($user_uuid)) {
+            return $user_uuid;
+        }
 
-        // Escape and sanitize the category name
-        $escapedCategoryName = $this->db->real_escape_string(strtolower($category_name));
-
-        $stmt = $this->db->prepare("
+        $sql = "
             SELECT p.product_id, p.product_name, p.description, p.price, p.stock_quantity, p.image_url, c.category_name
             FROM products p
             JOIN categories c ON p.category_id = c.category_id
-            WHERE LOWER(c.category_name) = ? AND p.user_uuid = ?
-        ");
-        
-        $stmt->bind_param('ss', $escapedCategoryName, $user_uuid);
+            WHERE LOWER(c.category_name) = :category_name AND p.user_uuid = :user_uuid
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(
+            ':category_name',
+            strtolower($category_name),
+            PDO::PARAM_STR
+        );
+        $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $products = $result->fetch_all(MYSQLI_ASSOC);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'category' => ['category_name' => ucfirst((string)$category_name)],
-            'products' => array_map([$this, 'mapProduct'], $products)
+            'category' => ['category_name' => ucfirst((string) $category_name)],
+            'products' => array_map([$this, 'mapProduct'], $products),
         ];
     }
 
@@ -173,12 +188,12 @@ class SellerSearchController
     private function mapProduct($product)
     {
         return [
-            'product_id' => (int)$product['product_id'],
-            'product_name' => (string)$product['product_name'],
-            'description' => (string)$product['description'],
-            'price' => (float)$product['price'],
-            'stock_quantity' => (int)$product['stock_quantity'],
-            'image_url' => (string)$product['image_url']
+            'product_id' => (int) $product['product_id'],
+            'product_name' => (string) $product['product_name'],
+            'description' => (string) $product['description'],
+            'price' => (float) $product['price'],
+            'stock_quantity' => (int) $product['stock_quantity'],
+            'image_url' => (string) $product['image_url'],
         ];
     }
 }

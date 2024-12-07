@@ -2,7 +2,8 @@
 	"autoload": {
 		"psr-4": {
 			"Api\\Controllers\\": "api-gateway/UserAuth/api/Controllers/",
-			"Auth\\": "api-gateway/UserAuth/Auth/",
+			"Auth\\": "api-gateway/UserAuth/api/Auth/",
+			"Product\\": "api-gateway/Product/api/",
 			"Database\\": "api-gateway/utils/"
 		}
 	},
