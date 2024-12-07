@@ -64,6 +64,7 @@ if (file_exists($cacheFile)) {
 // middlewares
 checkRateLimit();
 sanitizeInputs();
+handleCors();
 
 $publicRoutes = [
     '/api/auth/signup',

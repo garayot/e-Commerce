@@ -118,7 +118,7 @@ class UserAuthentication
                     $id = bin2hex(random_bytes(16));
                     $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
                     $stmt = $this->conn->prepare(
-                        'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
+                        'INSERT INTO sessiontokens (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
                     );
                     $stmt->bindValue(':id', $id, PDO::PARAM_STR);
                     $stmt->bindValue(
@@ -206,7 +206,7 @@ class UserAuthentication
             $id = bin2hex(random_bytes(16));
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
             $stmt = $this->conn->prepare(
-                'INSERT INTO session_token (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
+                'INSERT INTO sessiontokens (id, user_uuid, token, expires_at) VALUES (:id, :user_uuid, :token, :expires_at)'
             );
             $stmt->bindValue(':id', $id, PDO::PARAM_STR);
             $stmt->bindValue(':user_uuid', $user_uuid, PDO::PARAM_STR);
@@ -304,7 +304,7 @@ class UserAuthentication
             $token = $matches[1];
 
             $stmt = $this->conn->prepare(
-                'SELECT * FROM session_token WHERE token = :token'
+                'SELECT * FROM sessiontokens WHERE token = :token'
             );
             $stmt->bindValue(':token', $token, PDO::PARAM_STR);
             $stmt->execute();
@@ -312,7 +312,7 @@ class UserAuthentication
 
             if ($result) {
                 $stmt = $this->conn->prepare(
-                    'DELETE FROM session_token WHERE token = :token'
+                    'DELETE FROM sessiontokens WHERE token = :token'
                 );
                 $stmt->bindValue(':token', $token, PDO::PARAM_STR);
 

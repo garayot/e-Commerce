@@ -77,6 +77,11 @@ $router->addRoute('POST', '/api/auth/password-reset', [
     'resetPassword',
 ]);
 
+$router->addRoute('POST', '/api/auth/logout', [
+    AuthController::class,
+    'logout',
+]);
+
 // user profile apis
 $router->addRoute('GET', '/api/user/profile', [
     UserProfileController::class,

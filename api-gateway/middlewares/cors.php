@@ -25,4 +25,3 @@ function handleCors()
         exit(0);
     }
 }
-handleCors();

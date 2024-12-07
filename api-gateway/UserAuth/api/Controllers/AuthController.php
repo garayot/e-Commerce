@@ -83,4 +83,9 @@ class AuthController
         }
         return null;
     }
+
+    public function logout($token)
+    {
+        return $this->auth->logout($token);
+    }
 }
