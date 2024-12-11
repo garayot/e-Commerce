@@ -1,0 +1,18 @@
+{
+    "name": "csbay/e-commerce",
+    "autoload": {
+        "psr-4": {
+            "Csbay\\ECommerce\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "raviejay",
+            "email": "puspusraviejay@gmail.com"
+        }
+    ],
+    "require": {
+        "firebase/php-jwt": "^6.10",
+        "phpmailer/phpmailer": "^6.9"
+    }
+}

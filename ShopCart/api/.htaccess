@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /e-commerce/ShopCart/api/
+
+# Redirect requests to the api.php script
+RewriteRule ^cart/?$ api.php [L]
