@@ -31,29 +31,4 @@ function isValidToken($token)
     } else {
         return false;
     }
-
-    /**
-     * 
-     $pattern = '/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/';
- 
-     if (!preg_match($pattern, $token) || $token == '') {
-         return false;
-     }
-     * 
-     */
-    // temporary comment this due to session_token isn't storing the correct token
-    /**
-    * 
-     $db = new Database();
-    $conn = $db->getConnection();
-    $stmt = $conn->prepare(
-        'SELECT * FROM session_token WHERE token = :token AND expires_at > NOW()'
-    );
-    $stmt->bindValue(':token', $token, PDO::PARAM_STR);
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    $db->close();
-
-    return $result !== false;
-    */
 }

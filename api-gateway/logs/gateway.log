@@ -99,3 +99,4 @@
 {"timestamp":"2024-12-07 09:56:04","ip":"::1","method":"POST","uri":"\/api\/auth\/logout","status_code":404,"response":"{\"error\":\"Endpoint not found\"}"}
 {"timestamp":"2024-12-07 09:57:56","ip":"::1","method":"POST","uri":"\/api\/auth\/logout","status_code":404,"response":"{\"error\":\"Endpoint not found\"}"}
 {"timestamp":"2024-12-07 09:58:04","ip":"::1","method":"POST","uri":"\/api\/auth\/logout","status_code":404,"response":"{\"error\":\"Endpoint not found\"}"}
+{"timestamp":"2024-12-12 11:29:15","ip":"::1","method":"GET","uri":"\/api\/auth\/?action=list_user_roles&page=1&limit=5","status_code":404,"response":"{\"error\":\"Endpoint not found\"}"}
